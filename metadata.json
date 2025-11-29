@@ -1,0 +1,5 @@
+{
+  "name": "Veo3 Storyboard Animator",
+  "description": "An AI-powered application to generate, edit, and render 9:16 vertical animated videos using Google's Veo 3 model. Features script generation, character consistency management, and scene-by-scene video creation.",
+  "requestFramePermissions": []
+}
