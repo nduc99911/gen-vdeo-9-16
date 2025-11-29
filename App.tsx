@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Project, Scene, AppState } from './types';
 import * as GeminiService from './services/geminiService';
 import * as FileService from './services/fileService';
-import ApiKeySelector from './components/ApiKeySelector';
 import Timeline from './components/Timeline';
 import LogPanel from './components/LogPanel';
 import FullScreenPlayer from './components/FullScreenPlayer';
@@ -30,7 +29,6 @@ const inputClass = "w-full bg-gray-950 border border-gray-700 rounded-lg p-3 tex
 const labelClass = "block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1";
 
 const App: React.FC = () => {
-  const [apiKeyReady, setApiKeyReady] = useState(false);
   const [appState, setAppState] = useState<AppState>('dashboard');
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   
@@ -56,6 +54,16 @@ const App: React.FC = () => {
   const [showLogs, setShowLogs] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
+  useEffect(() => {
+    // Check for API key on mount, if missing, prompt settings
+    const localKey = localStorage.getItem("gemini_api_key");
+    const envKey = process.env.API_KEY;
+    if (!localKey && !envKey) {
+        setShowSettings(true);
+        logger.info("No API Key detected, opening settings.");
+    }
+  }, []);
+
   // Handlers
   const handleStartProject = async () => {
     if (!topicInput.trim()) {
@@ -80,7 +88,8 @@ const App: React.FC = () => {
       logger.info("Project initialized", { sceneCount: scenes.length });
     } catch (error) {
       console.error(error);
-      alert('Failed to generate script. Please try again.');
+      alert('Failed to generate script. Check your API Key in Settings.');
+      setShowSettings(true);
     } finally {
       setIsGeneratingScript(false);
     }
@@ -94,7 +103,7 @@ const App: React.FC = () => {
         setCharPreviewUrl(url);
         logger.success("Character preview generated");
     } catch (error) {
-        alert("Failed to generate character preview.");
+        alert("Failed to generate character preview. Check settings.");
     } finally {
         setIsGeneratingCharPreview(false);
     }
@@ -256,12 +265,6 @@ const App: React.FC = () => {
   };
 
   // Views
-  if (!apiKeyReady) {
-    return <ApiKeySelector onKeySelected={() => {
-        setApiKeyReady(true);
-        logger.info("API Key selected, app ready");
-    }} />;
-  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col font-sans">
@@ -353,7 +356,7 @@ const App: React.FC = () => {
                         <textarea 
                             value={topicInput}
                             onChange={(e) => setTopicInput(e.target.value)}
-                            className="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none placeholder-gray-500 text-sm shadow-sm"
+                            className="w-full bg-gray-950 border border-gray-700 rounded-lg p-4 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none placeholder-gray-500 text-sm shadow-sm"
                             placeholder="e.g., A cyberpunk detective chasing a robot through a neon city market..."
                             rows={3}
                         />
@@ -366,7 +369,7 @@ const App: React.FC = () => {
                                 <textarea 
                                     value={charDescInput}
                                     onChange={(e) => setCharDescInput(e.target.value)}
-                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none placeholder-gray-500 h-24 text-sm shadow-sm"
+                                    className="w-full bg-gray-950 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none placeholder-gray-500 h-24 text-sm shadow-sm"
                                     placeholder="e.g., A cute Shiba Inu wearing sunglasses"
                                 />
                              </div>

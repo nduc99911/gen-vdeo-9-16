@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { XMarkIcon, KeyIcon, CommandLineIcon } from '@heroicons/react/24/solid';
+import React, { useState, useEffect } from 'react';
+import { XMarkIcon, KeyIcon, CommandLineIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 
 interface Props {
   isOpen: boolean;
@@ -10,23 +10,32 @@ interface Props {
 }
 
 const SettingsModal: React.FC<Props> = ({ isOpen, onClose, showLogs, onToggleLogs }) => {
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const currentKey = localStorage.getItem("gemini_api_key") || '';
+      setApiKeyInput(currentKey);
+      setSaved(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  const handleChangeKey = async () => {
-    const aistudio = (window as any).aistudio;
-    if (aistudio) {
-      try {
-        await aistudio.openSelectKey();
-        // We don't need to do anything else, the environment updates automatically
-        // and the next API call will use the new key.
-        alert("API Key updated successfully. Future requests will use the new key.");
-      } catch (error) {
-        console.error("Failed to open key selector", error);
-      }
+  const handleSaveKey = () => {
+    if (apiKeyInput.trim()) {
+      localStorage.setItem("gemini_api_key", apiKeyInput.trim());
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      alert("API Key saved! You can now generate content.");
     } else {
-      alert("AI Studio environment not detected. Cannot change key securely.");
+      localStorage.removeItem("gemini_api_key");
+      alert("API Key removed.");
     }
   };
+
+  const inputClass = "w-full bg-gray-950 border border-gray-700 rounded-lg p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 focus:outline-none placeholder-gray-500 transition-all shadow-sm";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
@@ -53,17 +62,40 @@ const SettingsModal: React.FC<Props> = ({ isOpen, onClose, showLogs, onToggleLog
                 <div className="p-2 bg-purple-900/30 rounded-lg">
                   <KeyIcon className="w-6 h-6 text-purple-400" />
                 </div>
-                <div className="flex-1">
-                  <h4 className="text-white font-medium mb-1">Google Cloud API Key</h4>
+                <div className="flex-1 w-full">
+                  <h4 className="text-white font-medium mb-1">Google API Key</h4>
                   <p className="text-sm text-gray-400 mb-4">
-                    Manage the API key used for generating scripts and rendering Veo videos.
+                    Enter your Google GenAI API Key manually.
                   </p>
-                  <button 
-                    onClick={handleChangeKey}
-                    className="w-full py-2 px-4 bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-lg text-sm font-semibold text-white transition-colors flex items-center justify-center"
-                  >
-                    Change / Select API Key
-                  </button>
+                  
+                  <div className="space-y-3">
+                    <input 
+                      type="password"
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      placeholder="Paste your API Key here (starts with AIza...)"
+                      className={inputClass}
+                    />
+                    <button 
+                      onClick={handleSaveKey}
+                      className={`w-full py-2 px-4 rounded-lg text-sm font-semibold text-white transition-colors flex items-center justify-center space-x-2 ${
+                        saved ? 'bg-green-600 hover:bg-green-500' : 'bg-purple-600 hover:bg-purple-500'
+                      }`}
+                    >
+                      {saved ? (
+                        <>
+                          <CheckCircleIcon className="w-4 h-4" />
+                          <span>Saved</span>
+                        </>
+                      ) : (
+                        <span>Save Key</span>
+                      )}
+                    </button>
+                  </div>
+                  
+                  <p className="text-[10px] text-gray-500 mt-2">
+                    Key is stored locally in your browser. <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">Get a key here</a>.
+                  </p>
                 </div>
               </div>
             </div>
@@ -97,7 +129,7 @@ const SettingsModal: React.FC<Props> = ({ isOpen, onClose, showLogs, onToggleLog
 
         {/* Footer */}
         <div className="px-6 py-4 bg-gray-900/50 border-t border-gray-700 text-center">
-            <p className="text-xs text-gray-500">Veo3 Animator v1.0.0</p>
+            <p className="text-xs text-gray-500">Veo3 Animator v1.1.0</p>
         </div>
       </div>
     </div>

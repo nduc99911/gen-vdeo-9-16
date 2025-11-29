@@ -5,10 +5,13 @@ import { logger } from "./logger";
 
 // Helper to get client
 const getClient = () => {
-  const apiKey = process.env.API_KEY;
+  // Prioritize local storage key (manual entry), fallback to env (system injection)
+  const localKey = localStorage.getItem("gemini_api_key");
+  const apiKey = localKey || process.env.API_KEY;
+
   if (!apiKey) {
     logger.error("API Key missing");
-    throw new Error("API Key not found. Please select a key.");
+    throw new Error("API Key not found. Please enter your API Key in Settings.");
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -205,7 +208,9 @@ export const generateSceneVideo = async (
     logger.success(`Video generated for Scene ${scene.scene_number}, downloading...`);
 
     // Fetch the actual MP4 bytes using the key and convert to blob for playback
-    const fetchUrl = `${videoUri}&key=${process.env.API_KEY}`;
+    const localKey = localStorage.getItem("gemini_api_key");
+    const apiKey = localKey || process.env.API_KEY;
+    const fetchUrl = `${videoUri}&key=${apiKey}`;
     
     const response = await fetch(fetchUrl);
     if (!response.ok) {
@@ -266,7 +271,10 @@ export const generateIdleVideo = async (
       throw new Error("No idle video URI returned.");
     }
 
-    const fetchUrl = `${videoUri}&key=${process.env.API_KEY}`;
+    const localKey = localStorage.getItem("gemini_api_key");
+    const apiKey = localKey || process.env.API_KEY;
+    const fetchUrl = `${videoUri}&key=${apiKey}`;
+    
     const response = await fetch(fetchUrl);
     if (!response.ok) throw new Error("Failed to fetch idle video");
     
